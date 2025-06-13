@@ -1,35 +1,60 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from "react";
+import TaskList from "./TaskList";
+import "./App.css";
+import './style.css';
+import TaskForm from "./TaskForm";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [tasks, setTasks] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [currentTask, setCurrentTask] = useState({})
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+  useEffect(() => {
+    fetchTasks()
+  }, []);
+
+  const fetchTasks = async () => {
+    const response = await fetch("http://127.0.0.1:5000/tasks");
+    const data = await response.json();
+    setTasks(data.tasks);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setCurrentTask({})
+  }
+
+  const openCreateModal = () => {
+    if (!isModalOpen) setIsModalOpen(true)
+  }
+
+  const openEditModal = (task) => {
+    if (isModalOpen) return
+    setCurrentTask(task)
+    setIsModalOpen(true)
+  }
+
+  const onUpdate = () => {
+    closeModal()
+    fetchTasks()
+  }
+
+return (
+  <div className="app-container">
+    <button id="create-task-btn" onClick={openCreateModal}>Create New Task</button>
+    <TaskList tasks={tasks} updateTask={openEditModal} updateCallback={onUpdate} />
+    
+    {isModalOpen && (
+      <div className="modal">
+        <div className="modal-content">
+          <span className="close" onClick={closeModal}>&times;</span>
+          <TaskForm existingTask={currentTask} updateCallback={onUpdate} />
+        </div>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    )}
+  </div>
+);
+
 }
 
-export default App
+export default App;
